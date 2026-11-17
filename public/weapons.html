@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإبلاغ عن تجار الأسلحة - العين السورية</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* جعل الخريطة متجاوبة */
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* تحسين الاستجابة للهواتف */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .form-row .form-group {
+                width: 100%;
+            }
+            .logo h1 {
+                font-size: 1.2rem;
+            }
+            .form-header h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .map-instructions {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* تنسيق معاينة الملفات */
+        .file-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            border-radius: 6px;
+            display: none;
+        }
+        .file-preview img,
+        .file-preview video {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .file-error {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .file-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="security-alert">
+        ⚠️ <strong>تحذير:</strong> لا تُدخل أي معلومات شخصية. صف الموقع بدقة دون الكشف عن هويتك.
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-arrow-right"></i>
+                    <h1>العودة للرئيسية</h1>
+                </a>
+            </div>
+            <div class="security-indicator">
+                <i class="fas fa-gun"></i>
+                <span>نموذج أسلحة</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="form-header">
+                <h2><i class="fas fa-gun"></i> الإبلاغ عن تجار الأسلحة</h2>
+                <p class="subtitle">املأ النموذج أدناه للإبلاغ عن نشاط مشبوه يتعلق بالأسلحة</p>
+            </div>
+
+            <!-- ⚠️ لاحظ: لا يوجد action أو method -->
+            <form class="report-form" id="weaponForm" enctype="multipart/form-data">
+                <!-- قسم الموقع المعدّل -->
+                <div class="form-section">
+                    <h3><i class="fas fa-map-marked-alt"></i> الموقع</h3>
+                    <p class="form-description">حدد المحافظة ثم صف الموقع بدقة:</p>
+
+                    <div class="form-group">
+                        <label for="governorate">المحافظة:</label>
+                        <select id="governorate" required>
+                            <option value="">اختر المحافظة</option>
+                            <option value="دمشق">دمشق</option>
+                            <option value="ريف دمشق">ريف دمشق</option>
+                            <option value="حلب">حلب</option>
+                            <option value="حمص">حمص</option>
+                            <option value="حماة">حماة</option>
+                            <option value="اللاذقية">اللاذقية</option>
+                            <option value="طرطوس">طرطوس</option>
+                            <option value="درعا">درعا</option>
+                            <option value="السويداء">السويداء</option>
+                            <option value="إدلب">إدلب</option>
+                            <option value="الحسكة">الحسكة</option>
+                            <option value="دير الزور">دير الزور</option>
+                            <option value="الرقة">الرقة</option>
+                            <option value="القامشلي">القامشلي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exactLocation">حدد الموقع بدقة داخل المحافظة:</label>
+                        <textarea id="exactLocation" rows="3" placeholder="مثال: قرب سوق الحميدية في دمشق، أو شارع 16 تشرين في حلب..." required></textarea>
+                        <small class="form-hint">صف الموقع بأكبر قدر ممكن من التفاصيل دون ذكر معلومات شخصية.</small>
+                    </div>
+
+                    <!-- الخريطة التفاعلية -->
+                    <div class="form-group">
+                        <label>خريطة اختيارية (انقر على الموقع):</label>
+                        <div id="map"></div>
+                        <div class="map-instructions">
+                            ⚠️ لا تحدد موقعك الحالي. استخدمها فقط إذا كنت تعرف الموقع بدقة وبدون كشف هويتك.
+                        </div>
+                        <input type="hidden" id="selectedLat" name="lat">
+                        <input type="hidden" id="selectedLng" name="lng">
+                    </div>
+                </div>
+
+                <!-- قسم الأدلة مع رفع الملفات -->
+                <div class="form-section">
+                    <h3><i class="fas fa-file-image"></i> المرفقات (اختياري)</h3>
+                    
+                    <div class="form-group">
+                        <label for="evidenceFile">أرفق صورة أو فيديو قصير (لا يتجاوز 60 ثانية):</label>
+                        <input type="file" id="evidenceFile" accept="image/jpeg,image/png,video/mp4,video/webm">
+                        <div class="file-hint">
+                            📌 مسموح: صور (JPG, PNG) أو فيديو (MP4, WebM) مدته ≤ 60 ثانية.
+                        </div>
+                        <div id="fileError" class="file-error"></div>
+                        <div id="filePreview" class="file-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evidenceDescription">وصف للمرفق (اختياري):</label>
+                        <textarea id="evidenceDescription" rows="2" placeholder="ما الذي يظهر في الصورة أو الفيديو؟"></textarea>
+                    </div>
+                </div>
+
+                <!-- باقي النموذج كما هو -->
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> معلومات البلاغ</h3>
+                    
+                    <div class="form-group">
+                        <label for="weaponType">نوع الأسلحة:</label>
+                        <select id="weaponType">
+                            <option value="">اختر النوع</option>
+                            <option value="light">أسلحة خفيفة (مسدسات، بنادق)</option>
+                            <option value="heavy">أسلحة ثقيلة (قذائف، رشاشات)</option>
+                            <option value="explosives">مواد متفجرة</option>
+                            <option value="unknown">غير معروف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="activity">نوع النشاط:</label>
+                        <select id="activity">
+                            <option value="">اختر النشاط</option>
+                            <option value="storage">تخزين أسلحة</option>
+                            <option value="selling">بيع أسلحة</option>
+                            <option value="smuggling">تهريب أسلحة</option>
+                            <option value="manufacturing">تصنيع أسلحة</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">وصف مفصل:</label>
+                        <textarea id="description" rows="4" placeholder="صف ما رأيته بالتفصيل..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-clock"></i> التوقيت</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">التاريخ:</label>
+                            <input type="date" id="date">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="time">الوقت:</label>
+                            <input type="time" id="time">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>هل النشاط مستمر؟</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="ongoing" value="yes" checked>
+                                <span>نعم، النشاط مستمر</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="ongoing" value="no">
+                                <span>لا، كان حدثاً لمرة واحدة</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>تنبيه أخير:</strong> تأكد أنك لم تضيف أي معلومات شخصية عنك أو عن الآخرين.</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> إرسال البلاغ
+                    </button>
+                </div>
+            </form>
+
+            <div class="report-code hidden" id="reportCodeSection">
+                <div class="code-container">
+                    <h3><i class="fas fa-barcode"></i> رمز البلاغ الخاص بك</h3>
+                    <div class="code-display" id="generatedCode">WPN-8X7Y-2Z9A</div>
+                    <p class="code-instructions">
+                        <i class="fas fa-info-circle"></i>
+                        احفظ هذا الرمز في مكان آمن. يمكنك استخدامه لمتابعة حالة البلاغ أو إضافة معلومات إضافية.
+                    </p>
+                    <button class="btn-copy" onclick="copyCode()">
+                        <i class="fas fa-copy"></i> نسخ الرمز
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // تهيئة الخريطة
+        const map = L.map('map').setView([34.8021, 38.9968], 6); // مركز سوريا تقريبًا
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let marker = null;
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            document.getElementById('selectedLat').value = lat;
+            document.getElementById('selectedLng').value = lng;
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map);
+        });
+
+        // === معالجة رفع الملفات (نفس الكود) ===
+        const fileInput = document.getElementById('evidenceFile');
+        const previewContainer = document.getElementById('filePreview');
+        const errorDiv = document.getElementById('fileError');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            previewContainer.style.display = 'none';
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            const fileType = file.type;
+            const isImage = fileType.startsWith('image/');
+            const isVideo = fileType.startsWith('video/');
+
+            if (!isImage && !isVideo) {
+                showError('يرجى اختيار صورة (JPG/PNG) أو فيديو (MP4/WebM).');
+                fileInput.value = '';
+                return;
+            }
+
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            if (file.size > maxSize) {
+                showError('حجم الملف كبير جدًّا. الحد الأقصى هو 50 ميجابايت.');
+                fileInput.value = '';
+                return;
+            }
+
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else if (isVideo) {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = function() {
+                    window.URL.revokeObjectURL(video.src);
+                    const duration = video.duration;
+                    if (duration > 60) {
+                        showError('مدة الفيديو تتجاوز 60 ثانية. يرجى اختيار فيديو أقصر.');
+                        fileInput.value = '';
+                        previewContainer.style.display = 'none';
+                    } else {
+                        const url = URL.createObjectURL(file);
+                        previewContainer.innerHTML = `
+                            <video controls>
+                                <source src="${url}" type="${fileType}">
+                                متصفحك لا يدعم تشغيل الفيديو.
+                            </video>
+                        `;
+                        previewContainer.style.display = 'block';
+                    }
+                };
+                video.onerror = function() {
+                    showError('فشل تحميل الفيديو. تأكد من أنه صالح.');
+                    fileInput.value = '';
+                };
+                video.src = URL.createObjectURL(file);
+            }
+        });
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✓ تم نسخ الرمز');
+            });
+        }
+        console.log('submit handler start');
+
+        // ✅ AJAX: إرسال البلاغ إلى Laravel
+        document.getElementById('weaponForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // منع إعادة التحميل
+            
+            // جمع البيانات في FormData (يدعم الملفات)
+            const formData = new FormData();
+            formData.append('governorate', document.getElementById('governorate').value);
+            formData.append('exactLocation', document.getElementById('exactLocation').value);
+            
+            const lat = document.getElementById('selectedLat').value;
+            const lng = document.getElementById('selectedLng').value;
+            if (lat && lng) {
+                formData.append('lat', lat);
+                formData.append('lng', lng);
+            }
+
+            formData.append('weaponType', document.getElementById('weaponType').value || '');
+            formData.append('activity', document.getElementById('activity').value || '');
+            formData.append('description', document.getElementById('description').value || '');
+            formData.append('date', document.getElementById('date').value || '');
+            formData.append('time', document.getElementById('time').value || '');
+            formData.append('ongoing', document.querySelector('input[name="ongoing"]:checked').value);
+            formData.append('evidenceDescription', document.getElementById('evidenceDescription').value || '');
+
+            const fileInput = document.getElementById('evidenceFile');
+            if (fileInput.files[0]) {
+                formData.append('evidenceFile', fileInput.files[0]);
+            }
+
+            try {
+                console.log('gov:', document.getElementById('governorate').value);
+console.log('exactLocation:', document.getElementById('exactLocation').value);
+
+
+  console.log('submit handler start');
+  const response = await fetch('/api/reports/weapons', {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    },
+    body: formData
+  });
+
+  console.log('response status:', response.status, response.statusText);
+  const text = await response.text();
+  console.log('raw response (first 1000 chars):', text.slice(0, 1000));
+
+  let result;
+  try {
+    result = JSON.parse(text);
+    console.log('parsed JSON:', result);
+  } catch (e) {
+    console.error('Response is not JSON:', e);
+    alert('الخادم أرجع HTML/خطأ؛ تحقق من الكونسول (raw response).');
+    return;
+  }
+
+  // باقي المعالجة الأصلية:
+  if (response.ok) {
+    document.getElementById('generatedCode').textContent = result.tracking_code;
+    document.getElementById('reportCodeSection').classList.remove('hidden');
+    document.getElementById('reportCodeSection').scrollIntoView({ behavior: 'smooth' });
+  } else {
+    alert('❌ ' + (result.message || 'حدث خطأ أثناء إرسال البلاغ. حاول مرة أخرى.'));
+  }
+} catch (error) {
+  console.error('Fetch error:', error);
+  alert('⚠️ لا يمكن الاتصال بالخادم. تأكد من أن الموقع يعمل بشكل صحيح.');
+}
+        });
+    </script>
+</body>
+</html>

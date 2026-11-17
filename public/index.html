@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العين السورية - نظام الإبلاغ الآمن</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- شريط التنبيه الأمني -->
+    <div class="security-alert">
+        ⚠️ <strong>تنبيه أمني:</strong> هذا الموقع مصمم لحماية هويتك. لا تقدم أي معلومات شخصية.
+    </div>
+
+    <!-- الهيدر -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-eye"></i>
+                <h1>العين السورية</h1>
+                <span class="tagline">الإبلاغ الآمن للمستقبل</span>
+            </div>
+            
+            <div class="security-indicator">
+                <i class="fas fa-shield-alt"></i>
+                <span>الحماية نشطة</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+        <div class="container">
+            <!-- قسم الترحيب -->
+            <section class="hero">
+                <div class="hero-text">
+                    <h2>⚡ الإبلاغ بسرعة. ⚡ الحماية بذكاء.</h2>
+                    <p class="subtitle">
+                        نظام آمن للإبلاغ عن الأنشطة المشبوهة دون الكشف عن هويتك.<br>
+                        اختر نوع البلاغ وأرسل المعلومات - نضمن السرية التامة.
+                    </p>
+                    
+                    <div class="security-features">
+                        <div class="feature">
+                            <i class="fas fa-user-secret"></i>
+                            <span>لا تسجيل دخول</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span> احتفظ برمز التتبع اذا اردت تتبع البلاغ</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-clock"></i>
+                            <span>تقرير مؤقت ينحذف تلقائياً</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-image">
+                    <div class="globe-animation">
+                        <i class="fas fa-globe-asia"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- أنواع البلاغات -->
+            <section class="report-types">
+                <h2><i class="fas fa-exclamation-triangle"></i> اختر نوع البلاغ</h2>
+                <p class="section-description">
+                    اختر من القائمة أدناه النوع المناسب للخطر الذي تريد الإبلاغ عنه.<br>
+                    كل نموذج مصمم خصيصاً لجمع المعلومات المناسبة.
+                </p>
+
+                <div class="cards-grid">
+                    <!-- بلاغ تجار الأسلحة -->
+                    <a href="weapons.html" class="report-card weapon-card">
+                        <div class="card-icon">
+                            <i class="fas fa-gun"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>تجار الأسلحة</h3>
+                            <p>الإبلاغ عن تهريب أو تخزين أو بيع غير قانوني للأسلحة</p>
+                            <div class="card-stats">
+                                <span><i class="fas fa-shield-alt"></i> حماية عالية</span>
+                                <span><i class="fas fa-clock"></i> 2 دقيقة</span>
+                            </div>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a><!-- بلاغ تجار المخدرات -->
+                    <a href="drugs.html" class="report-card drug-card">
+                        <div class="card-icon">
+                            <i class="fas fa-pills"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>تجار المخدرات</h3>
+                            <p>الإبلاغ عن شبكات تهريب أو ترويج للمخدرات</p>
+                            <div class="card-stats">
+                                <span><i class="fas fa-user-secret"></i> مجهول</span>
+                                <span><i class="fas fa-clock"></i> 3 دقائق</span>
+                            </div>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
+
+                    <!-- بلاغ مجرمي الحرب -->
+                    <a href="war-crimes.html" class="report-card criminal-card">
+                        <div class="card-icon">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>مجرمي الحرب</h3>
+                            <p>توثيق جرائم حرب وانتهاكات ضد المدنيين</p>
+                            <div class="card-stats">
+                                <span><i class="fas fa-file-contract"></i> أدلة موثقة</span>
+                                <span><i class="fas fa-clock"></i> 5 دقائق</span>
+                            </div>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
+
+                    <!-- بلاغ الأنفاق والمقرات -->
+                    <a href="tunnels.html" class="report-card tunnel-card">
+                        <div class="card-icon">
+                            <i class="fas fa-torii-gate"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>الأنفاق والمقرات</h3>
+                            <p>الإبلاغ عن أنفاق أو مقرات سرية أو مخابئ</p>
+                            <div class="card-stats">
+                                <span><i class="fas fa-map-marked-alt"></i> تحديد موقع</span>
+                                <span><i class="fas fa-clock"></i> 4 دقائق</span>
+                            </div>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- قسم التعليمات -->
+            <section class="instructions">
+                <h2><i class="fas fa-graduation-cap"></i> كيف يعمل النظام؟</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>اختر البلاغ</h3>
+                        <p>اختر التصنيف المناسب للخطر الذي تريد الإبلاغ عنه</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>املأ النموذج</h3>
+                        <p>أدخل المعلومات دون أي بيانات شخصية</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>احصل على الرمز</h3>
+                        <p>ستحصل على رمز تتبع لمتابعة البلاغ</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h3>حافظ على سرية الرمز</h3>
+                        <p>الرمز هو طريقة التواصل الوحيدة مع تقريرك</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+
+
+<!-- الفوتر -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-warning">
+            <i class="fas fa-exclamation-circle"></i>
+            <p><strong>تحذير:</strong> هذا الموقع لأغراض إنسانية بحتة. أي استخدام لأغراض شخصية أو كيدية قد يعرضك للمسائلة القانونية.</p>
+        </div>
+        
+        <div class="footer-links">
+            <a href="#" class="footer-link"><i class="fas fa-lock"></i> سياسة الخصوصية</a>
+            <a href="#" class="footer-link"><i class="fas fa-shield-alt"></i> بيان الأمان</a>
+            <a href="#" class="footer-link"><i class="fas fa-question-circle"></i> التعليمات</a>
+        </div>
+        
+        <div class="footer-copyright">
+            <p>© 2026 نظام العين السورية. جميع الإبلاغات تخضع للتحقق.</p>
+            <p class="disclaimer">النظام لا يخزن أي معلومات شخصية عن المستخدمين.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- نافذة التحذير عند الخروج -->
+<div id="exitWarning" class="exit-warning hidden">
+    <div class="warning-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>انتظر! هل تريد مسح بيانات الجلسة؟</h3>
+        <p>لحماية خصوصيتك، ننصح بمسح سجل التصفح قبل مغادرة الموقع.</p>
+        <div class="warning-buttons">
+            <button id="clearData" class="btn-danger">مسح السجل والخروج</button>
+            <button id="stay" class="btn-secondary">البقاء في الموقع</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // تنبيه أمني بسيط
+    document.addEventListener('DOMContentLoaded', function() {
+        // نافذة التحذير عند الخروج
+        document.getElementById('clearData').addEventListener('click', function() {
+            alert('جارٍ مسح بيانات الجلسة... (هذه رسالة توضيحية فقط)');
+            window.location.href = 'about:blank';
+        });
+        
+        document.getElementById('stay').addEventListener('click', function() {
+            document.getElementById('exitWarning').classList.add('hidden');
+        });
+        
+    });
+</script>
+</body>
+</html>
+
+<script src="js/common.js"></script>

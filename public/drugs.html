@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإبلاغ عن تجار المخدرات - العين السورية</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .drug-theme {
+            --theme-color: #ba68c8;
+            --theme-dark: #9c27b0;
+            --theme-light: #e1bee7;
+        }
+        
+        .drug-header {
+            border-color: rgba(186, 104, 200, 0.3) !important;
+        }
+        
+        .drug-header h2 {
+            color: #ba68c8 !important;
+        }
+        
+        .btn-drug {
+            background: linear-gradient(45deg, #ba68c8, #9c27b0) !important;
+        }
+        
+        .btn-drug:hover {
+            background: linear-gradient(45deg, #9c27b0, #7b1fa2) !important;
+        }
+
+        /* خريطة تفاعلية */
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* معاينة المرفقات */
+        .file-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            border-radius: 6px;
+            display: none;
+        }
+        .file-preview img,
+        .file-preview video {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .file-error {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .file-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* استجابة للهواتف */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .form-row .form-group {
+                width: 100%;
+            }
+        }
+
+        .map-instructions {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #ff9800;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="drug-theme">
+    <div class="security-alert">
+        ⚠️ <strong>تحذير:</strong> لا تُدخل أي معلومات شخصية. صف الموقع دون الكشف عن هويتك.
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-arrow-right"></i>
+                    <h1>العودة للرئيسية</h1>
+                </a>
+            </div>
+            <div class="security-indicator">
+                <i class="fas fa-pills"></i>
+                <span>نموذج مخدرات</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="form-header drug-header">
+                <h2><i class="fas fa-pills"></i> الإبلاغ عن تجار المخدرات</h2>
+                <p class="subtitle">الإبلاغ عن شبكات تهريب أو ترويج للمخدرات</p>
+            </div>
+
+            <form class="report-form" id="drugForm" enctype="multipart/form-data">
+                <div class="form-section">
+                    <h3><i class="fas fa-map-marked-alt"></i> الموقع</h3>
+                    
+                    <div class="form-group">
+                        <label for="governorate">المحافظة:</label>
+                        <select id="governorate" required>
+                            <option value="">اختر المحافظة</option>
+                            <option value="دمشق">دمشق</option>
+                            <option value="ريف دمشق">ريف دمشق</option>
+                            <option value="حلب">حلب</option>
+                            <option value="حمص">حمص</option>
+                            <option value="حماة">حماة</option>
+                            <option value="اللاذقية">اللاذقية</option>
+                            <option value="طرطوس">طرطوس</option>
+                            <option value="درعا">درعا</option>
+                            <option value="السويداء">السويداء</option>
+                            <option value="إدلب">إدلب</option>
+                            <option value="الحسكة">الحسكة</option>
+                            <option value="دير الزور">دير الزور</option>
+                            <option value="الرقة">الرقة</option>
+                            <option value="القامشلي">القامشلي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exactLocation">حدد الموقع بدقة داخل المحافظة:</label>
+                        <textarea id="exactLocation" rows="3" placeholder="مثال: قرب سوق الحميدية في دمشق، أو شارع 16 تشرين في حلب..." required></textarea>
+                        <small class="form-hint">صف الموقع بأكبر قدر ممكن من التفاصيل دون ذكر معلومات شخصية.</small>
+                    </div>
+
+                    <!-- الخريطة التفاعلية -->
+                    <div class="form-group">
+                        <label>خريطة اختيارية (انقر على الموقع):</label>
+                        <div id="map"></div>
+                        <div class="map-instructions">
+                            ⚠️ لا تحدد موقعك الحالي. استخدمها فقط إذا كنت تعرف الموقع بدقة وبدون كشف هويتك.
+                        </div>
+                        <input type="hidden" id="selectedLat" name="lat">
+                        <input type="hidden" id="selectedLng" name="lng">
+                    </div>
+                </div>
+
+                <!-- قسم المرفقات -->
+                <div class="form-section">
+                    <h3><i class="fas fa-camera"></i> المرفقات (اختياري)</h3>
+                    
+                    <div class="form-group">
+                        <label for="evidenceFile">أرفق صورة أو فيديو قصير (لا يتجاوز 60 ثانية):</label>
+                        <input type="file" id="evidenceFile" accept="image/jpeg,image/png,video/mp4,video/webm">
+                        <div class="file-hint">
+                            📌 مسموح: صور (JPG, PNG) أو فيديو (MP4, WebM) مدته ≤ 60 ثانية.
+                        </div>
+                        <div id="fileError" class="file-error"></div>
+                        <div id="filePreview" class="file-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evidenceDescription">وصف للمرفق (اختياري):</label>
+                        <textarea id="evidenceDescription" rows="2" placeholder="ما الذي يظهر في الصورة أو الفيديو؟"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-capsules"></i> نوع المخدرات</h3>
+                    
+                    <div class="form-group">
+                        <label for="drugType">نوع المواد:</label>
+                        <select id="drugType">
+                            <option value="">اختر النوع</option>
+                            <option value="captagon">كبتاغون (حبوب)</option>
+                            <option value="heroin">هيروين</option>
+                            <option value="cannabis">حشيش/ماريجوانا</option>
+                            <option value="chemical">مواد كيميائية أولية</option>
+                            <option value="pills">أدوية مهربة</option>
+                            <option value="unknown">غير معروف</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="activityType">نوع النشاط:</label>
+                        <select id="activityType">
+                            <option value="">اختر النشاط</option>
+                            <option value="production">تصنيع/إنتاج</option>
+                            <option value="storage">تخزين</option>
+                            <option value="distribution">توزيع/بيع</option>
+                            <option value="smuggling">تهريب عبر الحدود</option>
+                            <option value="transport">نقل داخلي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scale">حجم النشاط:</label>
+                        <select id="scale">
+                            <option value="">اختر الحجم</option>
+                            <option value="individual">فردي (متعاطي/تاجر صغير)</option>
+                            <option value="group">مجموعة صغيرة</option>
+                            <option value="network">شبكة منظمة</option>
+                            <option value="factory">مصنع/مختبر</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">وصف مفصل:</label>
+                        <textarea id="description" rows="4" placeholder="صف ما رأيته بالتفصيل... (أشخاص، سيارات، كميات، طرق التخزين)"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-users"></i> معلومات إضافية</h3>
+                    
+                    <div class="form-group">
+                        <label>علامات مميزة:</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="sign1">
+                                <span>سيارات ذات ألواح معدنية</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sign2">
+                                <span>حراسة مسلحة</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sign3">
+                                <span>روائح كيميائية غريبة</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sign4">
+                                <span>حركة ليلية مستمرة</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frequency">تكرار النشاط:</label>
+                        <select id="frequency">
+                            <option value="">اختر التكرار</option>
+                            <option value="daily">يومي</option>
+                            <option value="weekly">أسبوعي</option>
+                            <option value="monthly">شهري</option>
+                            <option value="random">عشوائي</option>
+                            <option value="continuous">مستمر 24/7</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-shield-alt"></i> مستوى الخطورة</h3>
+                    
+                    <div class="form-group">
+                        <label>درجة التهديد:</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="threatLevel" value="low">
+                                <span>منخفض (نشاط محدود)</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="threatLevel" value="medium" checked>
+                                <span>متوسط (نشاط منظم)</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="threatLevel" value="high">
+                                <span>مرتفع (شبكة كبيرة/مسلحة)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="impact">تأثير على المجتمع:</label>
+                        <select id="impact">
+                            <option value="">اختر التأثير</option>
+                            <option value="local">محلي (حي/قرية)</option>
+                            <option value="district">منطقة/حي كبير</option>
+                            <option value="city">مدينة كاملة</option>
+                            <option value="regional">إقليمي/عدة مدن</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>تنبيه أمني:</strong> تجار المخدرات غالباً ما يكونون مسلحين وخطيرين. لا تقترب ولا تحاول مواجهتهم.</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-primary btn-drug">
+                        <i class="fas fa-paper-plane"></i> إرسال البلاغ
+                    </button>
+                </div>
+            </form>
+
+            <div class="report-code hidden" id="reportCodeSection">
+                <div class="code-container">
+                    <h3><i class="fas fa-barcode"></i> رمز البلاغ الخاص بك</h3>
+                    <div class="code-display" id="generatedCode">DRG-5B3C-8D9E</div>
+                    <p class="code-instructions">
+                        <i class="fas fa-info-circle"></i>
+                        احفظ هذا الرمز في مكان آمن. يمكنك استخدامه لمتابعة حالة البلاغ أو إضافة معلومات إضافية.
+                    </p>
+                    <div class="code-actions">
+                        <button class="btn-copy" onclick="copyCode()">
+                            <i class="fas fa-copy"></i> نسخ الرمز
+                        </button>
+                        <button class="btn-print" onclick="window.print()">
+                            <i class="fas fa-print"></i> طباعة الرمز
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+   <!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // === الخريطة التفاعلية ===
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof L === 'undefined') return;
+        const map = L.map('map').setView([34.8021, 38.9968], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let marker = null;
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            document.getElementById('selectedLat').value = lat;
+            document.getElementById('selectedLng').value = lng;
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map);
+        });
+    });
+
+    // === رفع الملفات ===
+    document.addEventListener('DOMContentLoaded', function () {
+        const fileInput = document.getElementById('evidenceFile');
+        const previewContainer = document.getElementById('filePreview');
+        const errorDiv = document.getElementById('fileError');
+
+        if (!fileInput) return;
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            previewContainer.style.display = 'none';
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            const fileType = file.type;
+            const isImage = fileType.startsWith('image/');
+            const isVideo = fileType.startsWith('video/');
+
+            if (!isImage && !isVideo) {
+                showError('يرجى اختيار صورة (JPG/PNG) أو فيديو (MP4/WebM).');
+                fileInput.value = '';
+                return;
+            }
+
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                showError('حجم الملف كبير جدًّا. الحد الأقصى هو 50 ميجابايت.');
+                fileInput.value = '';
+                return;
+            }
+
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else if (isVideo) {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = function() {
+                    window.URL.revokeObjectURL(video.src);
+                    const duration = video.duration;
+                    if (duration > 60) {
+                        showError('مدة الفيديو تتجاوز 60 ثانية.');
+                        fileInput.value = '';
+                        previewContainer.style.display = 'none';
+                    } else {
+                        const url = URL.createObjectURL(file);
+                        previewContainer.innerHTML = `
+                            <video controls>
+                                <source src="${url}" type="${fileType}">
+                                متصفحك لا يدعم تشغيل الفيديو.
+                            </video>
+                        `;
+                        previewContainer.style.display = 'block';
+                    }
+                };
+                video.onerror = function() {
+                    showError('فشل تحميل الفيديو. تأكد من أنه صالح.');
+                    fileInput.value = '';
+                };
+                video.src = URL.createObjectURL(file);
+            }
+        });
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    });
+
+    // === دوال مساعدة ===
+    function copyCode() {
+        const code = document.getElementById('generatedCode').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            alert('✓ تم نسخ الرمز بنجاح');
+        }).catch(err => {
+            console.error('فشل نسخ الرمز:', err);
+        });
+    }
+
+    // === إرسال النموذج إلى Laravel ===
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('drugForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+
+            // الموقع
+            formData.append('governorate', document.getElementById('governorate').value);
+            formData.append('exact_location', document.getElementById('exactLocation').value);
+            const lat = document.getElementById('selectedLat').value;
+            const lng = document.getElementById('selectedLng').value;
+            if (lat && lng) {
+                formData.append('lat', lat);
+                formData.append('lng', lng);
+            }
+
+            // المرفق
+            const fileInput = document.getElementById('evidenceFile');
+            if (fileInput?.files[0]) {
+                formData.append('evidence_file', fileInput.files[0]);
+            }
+            formData.append('evidence_description', document.getElementById('evidenceDescription')?.value || '');
+
+            // نوع المخدرات
+            formData.append('drug_type', document.getElementById('drugType')?.value || '');
+            formData.append('activity_type', document.getElementById('activityType')?.value || '');
+            formData.append('scale', document.getElementById('scale')?.value || '');
+            formData.append('description', document.getElementById('description')?.value || '');
+
+            // علامات مميزة
+            const signs = [
+                { id: 'sign1', field: 'has_plated_cars' },
+                { id: 'sign2', field: 'has_armed_guard' },
+                { id: 'sign3', field: 'has_chemical_smells' },
+                { id: 'sign4', field: 'has_night_activity' }
+            ];
+            signs.forEach(item => {
+                formData.append(item.field, document.getElementById(item.id)?.checked ? '1' : '0');
+            });
+
+            // معلومات إضافية
+            formData.append('frequency', document.getElementById('frequency')?.value || '');
+
+            // مستوى الخطورة
+            const threatLevel = document.querySelector('input[name="threatLevel"]:checked')?.value || 'medium';
+            formData.append('threat_level', threatLevel);
+            formData.append('impact', document.getElementById('impact')?.value || '');
+
+            try {
+                const response = await fetch('/api/reports/drugs', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('generatedCode').textContent = result.tracking_code;
+                    document.getElementById('reportCodeSection').classList.remove('hidden');
+                    document.getElementById('reportCodeSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('❌ ' + (result.message || 'حدث خطأ أثناء إرسال البلاغ.'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('⚠️ لا يمكن الاتصال بالخادم. تأكد من تشغيل الموقع عبر localhost.');
+            }
+        });
+    });
+</script>
+</body>
+</html>

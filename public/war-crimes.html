@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإبلاغ عن مجرمي الحرب - العين السورية</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .criminal-theme {
+            --theme-color: #ef5350;
+            --theme-dark: #d32f2f;
+            --theme-light: #ffcdd2;
+        }
+        
+        .criminal-header {
+            border-color: rgba(239, 83, 80, 0.3) !important;
+        }
+        
+        .criminal-header h2 {
+            color: #ef5350 !important;
+        }
+        
+        .btn-criminal {
+            background: linear-gradient(45deg, #ef5350, #d32f2f) !important;
+        }
+        
+        .btn-criminal:hover {
+            background: linear-gradient(45deg, #d32f2f, #c62828) !important;
+        }
+        
+        .evidence-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .evidence-type {
+            background: rgba(239, 83, 80, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 83, 80, 0.3);
+        }
+        
+        .crime-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .crime-category {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .crime-category:hover {
+            background: rgba(239, 83, 80, 0.2);
+            border-color: #ef5350;
+        }
+        
+        .crime-category.selected {
+            background: rgba(239, 83, 80, 0.3);
+            border-color: #ef5350;
+        }
+        
+        .witness-protection {
+            background: rgba(33, 150, 243, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        /* خريطة تفاعلية */
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* معاينة المرفقات */
+        .file-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            border-radius: 6px;
+            display: none;
+        }
+        .file-preview img,
+        .file-preview video {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .file-error {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .file-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* استجابة للهواتف */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .form-row .form-group {
+                width: 100%;
+            }
+            .evidence-types,
+            .crime-categories {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* تنبيه أمني */
+        .security-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            z-index: 9999;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body class="criminal-theme">
+    <div id="securityAlert" class="security-alert"></div>
+
+    <div class="security-alert" style="position: static; display: block; background: #e74c3c; margin-bottom: 15px;">
+        ⚠️ <strong>تحذير شديد:</strong> هذا النموذج لحالات جرائم الحرب الخطيرة. كن دقيقاً في المعلومات دون الكشف عن هويتك.
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-arrow-right"></i>
+                    <h1>العودة للرئيسية</h1>
+                </a>
+            </div>
+            <div class="security-indicator">
+                <i class="fas fa-user-slash"></i>
+                <span>نموذج جرائم الحرب</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="form-header criminal-header">
+                <h2><i class="fas fa-user-slash"></i> توثيق جرائم الحرب والانتهاكات</h2>
+                <p class="subtitle">توثيق جرائم الحرب والانتهاكات الجسيمة ضد المدنيين</p>
+                <div class="form-description">
+                    <p><i class="fas fa-info-circle"></i> هذا النموذج مخصص لتوثيق جرائم الحرب الخطيرة فقط. المعلومات قد تستخدم في محاكمات دولية.</p>
+                </div>
+            </div>
+
+            <form class="report-form" id="criminalForm" enctype="multipart/form-data">
+                <div class="form-section">
+                    <h3><i class="fas fa-user-tag"></i> معلومات المشتبه به</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="suspectName">الاسم أو اللقب (إن عرف):</label>
+                            <input type="text" id="suspectName" placeholder="لقب، اسم مستعار، أو صفة">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="suspectRank">الرتبة/المنصب:</label>
+                            <input type="text" id="suspectRank" placeholder="قائد، ضابط، مسؤول...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="suspectDescription">وصف المشتبه به:</label>
+                        <textarea id="suspectDescription" rows="3" placeholder="الصفات الجسدية، العمر التقريبي، علامات مميزة..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="affiliation">الانتماء/التنظيم:</label>
+                        <select id="affiliation">
+                            <option value="">اختر الانتماء</option>
+                            <option value="unknown">غير معروف</option>
+                            <option value="group1">تنظيم مسلح 1</option>
+                            <option value="group2">تنظيم مسلح 2</option>
+                            <option value="group3">مليشيا محلية</option>
+                            <option value="foreign">عناصر أجنبية</option>
+                            <option value="other">آخر (حدد في الوصف)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-gavel"></i> نوع الجريمة</h3>
+                    <p class="form-description">اختر فئة/فئات الجريمة المرتكبة:</p>
+                    
+                    <div class="crime-categories">
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-skull-crossbones"></i>
+                            <div>القتل العمد</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-house-damage"></i>
+                            <div>تدمير الممتلكات</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-handcuffs"></i>
+                            <div>التعذيب</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-people-arrows"></i>
+                            <div>التهجير القسري</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-female"></i>
+                            <div>الاعتداء الجنسي</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-child"></i>
+                            <div>تجنيد الأطفال</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-hospital"></i>
+                            <div>استهداف المرافق الطبية</div>
+                        </div>
+                        <div class="crime-category" onclick="toggleCategory(this)">
+                            <i class="fas fa-school"></i>
+                            <div>استهداف المدارس</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="crimeDetails">تفاصيل الجريمة:</label>
+                        <textarea id="crimeDetails" rows="4" placeholder="صف الجريمة بالتفصيل (التاريخ، الوقت، المكان، الأحداث)..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="victims">عدد وأوصاف الضحايا:</label>
+                        <textarea id="victims" rows="3" placeholder="عدد الضحايا، أعمارهم، جنسياتهم، إصاباتهم..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-map-marked-alt"></i> موقع الجريمة</h3>
+                    
+                    <div class="form-group">
+                        <label for="governorate">المحافظة:</label>
+                        <select id="governorate" required>
+                            <option value="">اختر المحافظة</option>
+                            <option value="دمشق">دمشق</option>
+                            <option value="ريف دمشق">ريف دمشق</option>
+                            <option value="حلب">حلب</option>
+                            <option value="حمص">حمص</option>
+                            <option value="حماة">حماة</option>
+                            <option value="اللاذقية">اللاذقية</option>
+                            <option value="طرطوس">طرطوس</option>
+                            <option value="درعا">درعا</option>
+                            <option value="السويداء">السويداء</option>
+                            <option value="إدلب">إدلب</option>
+                            <option value="الحسكة">الحسكة</option>
+                            <option value="دير الزور">دير الزور</option>
+                            <option value="الرقة">الرقة</option>
+                            <option value="القامشلي">القامشلي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exactLocation">حدد الموقع بدقة داخل المحافظة:</label>
+                        <textarea id="exactLocation" rows="2" placeholder="مثال: قرب سوق الحميدية في دمشق، أو شارع 16 تشرين في حلب..." required></textarea>
+                        <small class="form-hint">صف الموقع بأكبر قدر ممكن من التفاصيل دون ذكر معلومات شخصية.</small>
+                    </div>
+
+                    <!-- الخريطة التفاعلية -->
+                    <div class="form-group">
+                        <label>خريطة اختيارية (انقر على الموقع):</label>
+                        <div id="map"></div>
+                        <div class="map-instructions" style="margin-top: 8px; font-size: 0.85rem; color: #e74c3c; font-weight: bold;">
+                            ⚠️ لا تحدد موقعك الحالي. استخدمها فقط إذا كنت تعرف الموقع بدقة وبدون كشف هويتك.
+                        </div>
+                        <input type="hidden" id="selectedLat" name="lat">
+                        <input type="hidden" id="selectedLng" name="lng">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="crimeDate">تاريخ الجريمة:</label>
+                            <input type="date" id="crimeDate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="crimeTime">وقت الجريمة:</label>
+                            <input type="time" id="crimeTime">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم المرفقات -->
+                <div class="form-section">
+                    <h3><i class="fas fa-camera"></i> المرفقات (اختياري)</h3>
+                    
+                    <div class="form-group">
+                        <label for="evidenceFile">أرفق صورة أو فيديو قصير (لا يتجاوز 60 ثانية):</label>
+                        <input type="file" id="evidenceFile" accept="image/jpeg,image/png,video/mp4,video/webm">
+                        <div class="file-hint">
+                            📌 مسموح: صور (JPG, PNG) أو فيديو (MP4, WebM) مدته ≤ 60 ثانية.
+                        </div>
+                        <div id="fileError" class="file-error"></div>
+                        <div id="filePreview" class="file-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evidenceDescription">وصف للمرفق (اختياري):</label>
+                        <textarea id="evidenceDescription" rows="2" placeholder="ما الذي يظهر في الصورة أو الفيديو؟"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-camera"></i> الأدلة والشهود</h3>
+                    
+                    <div class="evidence-types">
+                        <div class="evidence-type">
+                            <h4><i class="fas fa-photo-video"></i> أدلة رقمية</h4>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="evidencePhotos">
+                                    <span>صور فوتوغرافية</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="evidenceVideos">
+                                    <span>مقاطع فيديو</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="evidenceAudio">
+                                    <span>تسجيلات صوتية</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="evidence-type">
+                            <h4><i class="fas fa-file-medical"></i> أدلة طبية</h4>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="evidenceReports">
+                                    <span>تقارير طبية</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="evidenceAutopsy">
+                                    <span>تقارير تشريح</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="evidence-type">
+                            <h4><i class="fas fa-users"></i> شهود</h4>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="witnessDirect">
+                                    <span>شهود عيان مباشرين</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="witnessIndirect">
+                                    <span>شهود غير مباشرين</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="witness-protection">
+                        <h4><i class="fas fa-user-shield"></i> حماية الشهود</h4>
+                        <p>إذا كنت شاهداً وتحتاج للحماية، سيتم توفير قنوات اتصال آمنة مع المنظمات الدولية.</p>
+                        <label>
+                            <input type="checkbox" id="needProtection">
+                            <span>أحتاج إلى حماية/اتصال آمن</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-balance-scale"></i> أهمية التوثيق</h3>
+                    
+                    <div class="form-group">
+                        <label>أهمية هذه المعلومات:</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="importance" value="critical">
+                                <span>حرجة (قد تؤدي إلى ملاحقة قضائية)</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="importance" value="important" checked>
+                                <span>مهمة (دعم لقضايا حقوق الإنسان)</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="importance" value="supportive">
+                                <span>داعمة (معلومات تكميلية)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="internationalOrgs">المنظمات الدولية المطلوب إبلاغها:</label>
+                        <select id="internationalOrgs" multiple size="3">
+                            <option value="un">الأمم المتحدة</option>
+                            <option value="hrw">هيومن رايتس ووتش</option>
+                            <option value="ai">منظمة العفو الدولية</option>
+                            <option value="icc">المحكمة الجنائية الدولية</option>
+                            <option value="icrc">اللجنة الدولية للصليب الأحمر</option>
+                        </select>
+                        <small class="form-hint">اضغط Ctrl لاختيار أكثر من منظمة</small>
+                    </div>
+                </div>
+
+                <div class="form-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>ملاحظة هامة:</strong> هذه المعلومات قد تستخدم في تحقيق دولي. كن دقيقاً وصادقاً في كل ما تقدمه.</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-primary btn-criminal">
+                        <i class="fas fa-file-contract"></i> إرسال التوثيق
+                    </button>
+                </div>
+            </form>
+
+            <div class="report-code hidden" id="reportCodeSection">
+                <div class="code-container">
+                    <h3><i class="fas fa-file-contract"></i> رقم التوثيق الدولي</h3>
+                    <div class="code-display" id="generatedCode">WAR-CRIME-2023-X7Y8Z9</div>
+                    <p class="code-instructions">
+                        <i class="fas fa-shield-alt"></i>
+                        هذا الرقم قد يتم استخدامه في التحقيقات الدولية. احفظه في مكان آمن للغاية.
+                    </p>
+                    <div class="code-features">
+                        <div class="feature">
+                            <i class="fas fa-lock"></i>
+                            <span>مشفر ومحمي دولياً</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-globe"></i>
+                            <span>مسجل في قواعد بيانات دولية</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-history"></i>
+                            <span>يحفظ لمدة 50 سنة</span>
+                        </div>
+                    </div>
+                    <div class="code-actions">
+                        <button class="btn-copy" onclick="copyCode()">
+                            <i class="fas fa-copy"></i> نسخ الرقم
+                        </button>
+                        <button class="btn-print" onclick="printSecureCode()">
+                            <i class="fas fa-print"></i> طباعة آمنة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- =============== كود JavaScript النظيف =============== -->
+    <script>
+        // =============== 1. الخريطة ===============
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof L === 'undefined') return;
+
+            const map = L.map('map').setView([34.8021, 38.9968], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            let marker = null;
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                document.getElementById('selectedLat').value = lat;
+                document.getElementById('selectedLng').value = lng;
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map);
+            });
+        });
+
+        // =============== 3. رفع الملفات ===============
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('evidenceFile');
+            const previewContainer = document.getElementById('filePreview');
+            const errorDiv = document.getElementById('fileError');
+
+            if (!fileInput) return;
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                previewContainer.style.display = 'none';
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+
+                const fileType = file.type;
+                const isImage = fileType.startsWith('image/');
+                const isVideo = fileType.startsWith('video/');
+
+                if (!isImage && !isVideo) {
+                    showError('يرجى اختيار صورة (JPG/PNG) أو فيديو (MP4/WebM).');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const maxSize = 50 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    showError('حجم الملف كبير جدًّا. الحد الأقصى هو 50 ميجابايت.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (isImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+                        previewContainer.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else if (isVideo) {
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.onloadedmetadata = function() {
+                        window.URL.revokeObjectURL(video.src);
+                        const duration = video.duration;
+                        if (duration > 60) {
+                            showError('مدة الفيديو تتجاوز 60 ثانية.');
+                            fileInput.value = '';
+                            previewContainer.style.display = 'none';
+                        } else {
+                            const url = URL.createObjectURL(file);
+                            previewContainer.innerHTML = `
+                                <video controls>
+                                    <source src="${url}" type="${fileType}">
+                                    متصفحك لا يدعم تشغيل الفيديو.
+                                </video>
+                            `;
+                            previewContainer.style.display = 'block';
+                        }
+                    };
+                    video.onerror = function() {
+                        showError('فشل تحميل الفيديو. تأكد من أنه صالح.');
+                        fileInput.value = '';
+                    };
+                    video.src = URL.createObjectURL(file);
+                }
+            });
+
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // =============== 4. وظائف مساعدة ===============
+        function toggleCategory(element) {
+            element.classList.toggle('selected');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✓ تم نسخ الرقم التوثيقي');
+            });
+        }
+
+        function printSecureCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head><title>طباعة آمنة</title>
+                <style>body{font-family:'Cairo',sans-serif;padding:20px;}
+                .secure-note{border:2px solid #d32f2f;padding:20px;margin:20px 0;background:#fff;}
+                .code{font-size:24px;font-weight:bold;color:#d32f2f;}</style>
+                </head>
+                <body>
+                    <h2>📄 رقم التوثيق الدولي</h2>
+                    <div class="secure-note">
+                        <p><strong>الرقم:</strong> <span class="code">${code}</span></p>
+                        <p><small>تم إنشاؤه: ${new Date().toLocaleString('ar-SA')}</small></p>
+                    </div>
+                    <p><i>⚠️ احفظه في مكان آمن.</i></p>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // =============== 5. إرسال النموذج ===============
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('criminalForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const selectedCategories = document.querySelectorAll('.crime-category.selected');
+                if (selectedCategories.length === 0) {
+                    alert('⚠️ يرجى اختيار نوع الجريمة على الأقل');
+                    return;
+                }
+
+                const formData = new FormData();
+
+                formData.append('suspect_name', document.getElementById('suspectName')?.value || '');
+                formData.append('suspect_rank', document.getElementById('suspectRank')?.value || '');
+                formData.append('suspect_description', document.getElementById('suspectDescription')?.value || '');
+                formData.append('affiliation', document.getElementById('affiliation')?.value || '');
+
+                const crimeTypes = Array.from(selectedCategories).map(el => el.querySelector('div').textContent.trim());
+                formData.append('crime_types', JSON.stringify(crimeTypes));
+
+                formData.append('crime_details', document.getElementById('crimeDetails')?.value || '');
+                formData.append('victims', document.getElementById('victims')?.value || '');
+
+                formData.append('governorate', document.getElementById('governorate')?.value);
+                formData.append('exact_location', document.getElementById('exactLocation')?.value);
+                const lat = document.getElementById('selectedLat')?.value;
+                const lng = document.getElementById('selectedLng')?.value;
+                if (lat && lng) {
+                    formData.append('lat', lat);
+                    formData.append('lng', lng);
+                }
+
+                formData.append('crime_date', document.getElementById('crimeDate')?.value || '');
+                formData.append('crime_time', document.getElementById('crimeTime')?.value || '');
+
+                const fileInput = document.getElementById('evidenceFile');
+                if (fileInput?.files[0]) {
+                    formData.append('evidence_file', fileInput.files[0]);
+                }
+                formData.append('evidence_description', document.getElementById('evidenceDescription')?.value || '');
+
+                const checkboxes = [
+                    { id: 'evidencePhotos', field: 'has_photos' },
+                    { id: 'evidenceVideos', field: 'has_videos' },
+                    { id: 'evidenceAudio', field: 'has_audio' },
+                    { id: 'evidenceReports', field: 'has_medical_reports' },
+                    { id: 'evidenceAutopsy', field: 'has_autopsy_reports' },
+                    { id: 'witnessDirect', field: 'has_direct_witnesses' },
+                    { id: 'witnessIndirect', field: 'has_indirect_witnesses' }
+                ];
+
+                checkboxes.forEach(item => {
+                    formData.append(item.field, document.getElementById(item.id)?.checked ? '1' : '0');
+                });
+
+                formData.append('needs_protection', document.getElementById('needProtection')?.checked ? '1' : '0');
+
+                const importance = document.querySelector('input[name="importance"]:checked')?.value || 'important';
+                formData.append('importance', importance);
+
+                const orgSelect = document.getElementById('internationalOrgs');
+                const selectedOrgs = orgSelect ? Array.from(orgSelect.selectedOptions).map(opt => opt.value) : [];
+                formData.append('target_organizations', JSON.stringify(selectedOrgs));
+
+                try {
+                    const response = await fetch('/api/reports/war-crimes', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('generatedCode').textContent = result.tracking_code;
+                        document.getElementById('reportCodeSection').classList.remove('hidden');
+                        document.getElementById('reportCodeSection').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert('❌ ' + (result.message || 'حدث خطأ أثناء إرسال التوثيق.'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('⚠️ لا يمكن الاتصال بالخادم. تأكد من تشغيل الموقع عبر localhost.');
+                }
+            });
+
+            document.getElementById('crimeDate').valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>
