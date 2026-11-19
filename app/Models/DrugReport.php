@@ -25,6 +25,9 @@ class DrugReport extends Model
         'frequency',
         'threat_level',
         'impact',
+        'status',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
@@ -34,5 +37,6 @@ class DrugReport extends Model
         'has_armed_guard' => 'boolean',
         'has_chemical_smells' => 'boolean',
         'has_night_activity' => 'boolean',
+        'reviewed_at' => 'datetime',
     ];
 }

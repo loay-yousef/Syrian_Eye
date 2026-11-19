@@ -29,10 +29,13 @@
 <body>
 <header>
     <h1>لوحة الإحصائيات والتحليل</h1>
-    <form method="post" action="{{ route('admin.logout') }}">
-        @csrf
-        <button class="logout" type="submit">تسجيل الخروج</button>
-    </form>
+    <div>
+        <a href="{{ route('admin.reports.index') }}" style="color:#57d2b4; margin-left:12px;">إدارة البلاغات</a>
+        <form method="post" action="{{ route('admin.logout') }}" style="display:inline">
+            @csrf
+            <button class="logout" type="submit">تسجيل الخروج</button>
+        </form>
+    </div>
 </header>
 <main>
     <div class="notice">تعرض هذه الصفحة مؤشرات مجمعة فقط. لا يتم عرض نصوص البلاغات أو الأدلة في لوحة الإحصائيات.</div>

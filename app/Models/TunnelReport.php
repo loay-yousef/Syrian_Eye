@@ -40,6 +40,9 @@ class TunnelReport extends Model
         'discovery_date',
         'activity_time',
         'duration',
+        'status',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
@@ -62,5 +65,6 @@ class TunnelReport extends Model
         'has_alarm_systems' => 'boolean',
         'has_generators' => 'boolean',
         'has_ventilation' => 'boolean',
+        'reviewed_at' => 'datetime',
     ];
 }

@@ -33,6 +33,9 @@ class WarCrimeReport extends Model
         'needs_protection',
         'importance',
         'target_organizations',
+        'status',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
@@ -48,5 +51,6 @@ class WarCrimeReport extends Model
         'needs_protection' => 'boolean',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
+        'reviewed_at' => 'datetime',
     ];
 }
